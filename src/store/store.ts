@@ -1,6 +1,7 @@
 import {create} from 'zustand'
 import type { DraftPatient, Patient } from '../types'
 import {v4 as uuidv4} from 'uuid'
+import { createJSONStorage, persist } from 'zustand/middleware'
 
 type PatientState = {
 
@@ -24,53 +25,60 @@ const createPatient=(data:DraftPatient):Patient=>{
 
 }
 
-export const usePatientStore = create<PatientState>((set,get)=>({
+export const usePatientStore = create<PatientState>()(
+    persist((set,get)=>({
 
-    patients : [],
-    addPatient:(data)=>{
-        
-        
-        set((state)=>({
-            patients: state.editingId 
-            ? state.patients.map((patient)=>{
-                    if(patient.id=== state.editingId){
-                        return{
-                            ...patient,
-                            ...data
-                        }
-                    }
-                    return patient
-                })
+            patients : [],
+            addPatient:(data)=>{
+                
+                
+                set((state)=>({
+                    patients: state.editingId 
+                    ? state.patients.map((patient)=>{
+                            if(patient.id=== state.editingId){
+                                return{
+                                    ...patient,
+                                    ...data
+                                }
+                            }
+                            return patient
+                        })
 
-            :[...state.patients,createPatient(data)],
-            editingId:''
-        }))
+                    :[...state.patients,createPatient(data)],
+                    editingId:''
+                }))
 
-    },
-    deletePatient:(id)=>{
+            },
+            deletePatient:(id)=>{
 
-        set((state)=>({
+                set((state)=>({
 
-            patients: state.patients.filter(patient => patient.id !== id)
+                    patients: state.patients.filter(patient => patient.id !== id),
+                    editingId: '',
 
-        }))
+                }))
 
-    },
-    editingId:'',
-    addEditingId:(id)=>{
-        
-        set((state)=>({
+            },
+            editingId:'',
+            addEditingId:(id)=>{
+                
+                set((state)=>({
 
-            editingId: id
+                    editingId: id
 
-        }))
+                }))
 
-    },
-    getEditingId:(id)  => {
-        
-        return get().patients.filter(patient=>patient.id === id)
+            },
+            getEditingId:(id)  => {
+                
+                return get().patients.filter(patient=>patient.id === id)
 
 
-    },
+            },
+        }),{
+            name:'patient-storage'
+        })
+     
+)
 
-}))
+
